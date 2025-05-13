@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import Box from "@mui/joy/Box";
 import Typography from "@mui/joy/Typography";
-import Button from "@mui/joy/Button";
 import Dropdown from "@mui/joy/Dropdown";
 import Menu from "@mui/joy/Menu";
 import MenuButton from "@mui/joy/MenuButton";
@@ -87,11 +86,11 @@ export default function ClassWord({ role }: ClassWordProps) {
               : ""}
           </DialogTitle>
           <DialogContent>
-            {formType === "assignment" && <AssignmentCreateForm />}
+            {formType === "assignment" && <AssignmentCreateForm classId={6} />}
             {formType === "material" && <MaterialCreateForm />}
             {formType === "topic" && (
               <Typography>Topic creation form goes here.</Typography>
-              // Replace with your actual TopicCreateForm component
+              
             )}
           </DialogContent>
         </ModalDialog>

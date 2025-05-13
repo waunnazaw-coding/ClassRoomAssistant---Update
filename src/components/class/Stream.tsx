@@ -11,26 +11,25 @@ import MoreHoriz from "@mui/icons-material/MoreHoriz";
 import FullscreenIcon from "@mui/icons-material/Fullscreen";
 import CardContent from "@mui/joy/CardContent";
 import Stack from "@mui/joy/Stack";
-import Sheet from "@mui/joy/Sheet";
-import Avatar from "@mui/joy/Avatar";
-import VideoFileIcon from "@mui/icons-material/VideoFile";
-import { styled } from "@mui/joy/styles";
+// import Sheet from "@mui/joy/Sheet";
+// import { styled } from "@mui/joy/styles";
 import { Link } from "react-router-dom";
 import AnnouncementCreator from "./Announcement";
 import { Menu, MenuItem, ListItemDecorator, Snackbar } from "@mui/joy";
 import LinkIcon from "@mui/icons-material/Link";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ClassDetails from "./ClassDetailCard";
 
 const bannerUrl = "https://gstatic.com/classroom/themes/img_reachout.jpg";
 
-const Item = styled(Sheet)(({ theme }) => ({
-  ...theme.typography["body-sm"],
-  padding: theme.spacing(1),
-  textAlign: "left",
-  borderRadius: 6,
-  color: theme.vars.palette.text.secondary,
-  maxWidth: "100%",
-}));
+// const Item = styled(Sheet)(({ theme }) => ({
+//   ...theme.typography["body-sm"],
+//   padding: theme.spacing(1),
+//   textAlign: "left",
+//   borderRadius: 6,
+//   color: theme.vars.palette.text.secondary,
+//   maxWidth: "100%",
+// }));
 
 interface StreamProps {
   classDetail: {
@@ -259,24 +258,20 @@ export default function Stream({
         {/* Main Content */}
         <Box sx={{ flex: 1 }}>
           {isAuthorized && (
-            <AnnouncementCreator
-              classId={classDetail.id} // or however you get class id
-              onPosted={() => {
-                // refresh announcements list or notify user
-                console.log("Announcement posted callback");
-              }}
-            />
+            <Stack spacing={2}>
+              <AnnouncementCreator
+                classId={classDetail.id} // or however you get class id
+                onPosted={() => {
+                  // refresh announcements list or notify user
+                  console.log("Announcement posted callback");
+                }}
+              />
+            </Stack>
           )}
 
           <Stack spacing={1}>
-            <Item variant="outlined">
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Avatar sx={{ color: "blue" }}>
-                  <VideoFileIcon fontSize="large" />
-                </Avatar>
-                <Typography>Hello</Typography>
-              </Stack>
-            </Item>
+            <ClassDetails classId={classDetail.id} />
+            {/* Class Details */}
           </Stack>
         </Box>
       </Box>

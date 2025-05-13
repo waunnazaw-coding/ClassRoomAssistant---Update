@@ -12,13 +12,8 @@ import JoinClassModal from "../components/class/JoinClassModal";
 import ClassCard from "../components/class/ClassCard";
 import Toast from "../components/common/Toast"; // Import Toast
 import { useAuth } from "../contexts/AuthContext";
-import {
-  createClass,
-  enrollInClass,
-  getClassesByUserId,
-  ClassRequestDto,
-  ClassResponseDto,
-} from "../api/classes";
+import { createClass, enrollInClass, getClassesByUserId } from "../api/classes";
+import { ClassResponseDto, ClassRequestDto } from "../types/index";
 
 export default function Home() {
   const [openJoin, setOpenJoin] = useState(false);

@@ -1,71 +1,13 @@
 import axiosInstance from "./axiosInstance";
-
-
-export interface ClassRequestDto {
-  userId: number;
-  name: string;
-  section?: string;
-  subject?: string;
-  room?: string;
-}
-
-export interface ClassUpdateRequestDto {
-  name: string;
-  section?: string;
-  subject?: string;
-  room?: string;
-}
-
-export interface ClassResponseDto {
-  id: number;
-  name: string;
-  section: string;
-  classCode: string;
-  subject: string;
-  role: string;
-  isDeleted: boolean;
-  room: string;
-  createdBy?: number;
-  createdDate?: string;
-}
-
-export interface Class {
-  id: number;
-  name: string;
-  section: string;
-  classCode: string;
-  subject: string;
-  room: string;
-  createdBy?: number;
-  createdDate?: string;
-}
-
-export interface EnrollmentResponse {
-  message: string;
-}
-
-
-export interface MaterialDto {
-  id: number;
-  title: string;
-  description?: string | null;
-  createdAt?: string | null; 
-}
-
-export interface AssignmentDto {
-  id: number;
-  title: string;
-  points?: number | null;
-  createdAt?: string | null;
-}
-
-export interface TopicWithMaterialsAssignmentsDto {
-  topicId: number;
-  topicName: string;
-  materials: MaterialDto[];
-  assignments: AssignmentDto[];
-}
-
+import {
+  ClassRequestDto,
+  ClassResponseDto,
+  ClassUpdateRequestDto,
+  EnrollmentResponse,
+  Class,
+  GetClassDetailsResponse,
+  TopicWithMaterialsAssignmentsDto,
+} from "../types/index";
 
 export async function createClass(
   data: ClassRequestDto
@@ -74,6 +16,14 @@ export async function createClass(
   return response.data;
 }
 
+export async function getClassDetails(
+  classId: number
+): Promise<GetClassDetailsResponse> {
+  const response = await axiosInstance.get<GetClassDetailsResponse>(
+    `/classes/${classId}/details`
+  );
+  return response.data;
+}
 
 export async function enrollInClass(
   classCode: string,
