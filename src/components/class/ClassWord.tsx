@@ -1,0 +1,105 @@
+import React, { useState } from "react";
+import Box from "@mui/joy/Box";
+import Typography from "@mui/joy/Typography";
+import Button from "@mui/joy/Button";
+import Dropdown from "@mui/joy/Dropdown";
+import Menu from "@mui/joy/Menu";
+import MenuButton from "@mui/joy/MenuButton";
+import MenuItem from "@mui/joy/MenuItem";
+import Modal from "@mui/joy/Modal";
+import ModalDialog, { ModalDialogProps } from "@mui/joy/ModalDialog";
+import ModalClose from "@mui/joy/ModalClose";
+import DialogTitle from "@mui/joy/DialogTitle";
+import DialogContent from "@mui/joy/DialogContent";
+import AssignmentCreateForm from "./AssignmentCreate";
+import MaterialCreateForm from "./MaterialCreate";
+import AssignmentList from "./AssignmentList";
+import MaterialList from "./MaterialList";
+
+interface ClassWordProps {
+  role: "Teacher" | "SubTeacher" | "Student";
+}
+
+export default function ClassWord({ role }: ClassWordProps) {
+  const [layout, setLayout] = React.useState<
+    ModalDialogProps["layout"] | undefined
+  >(undefined);
+  const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [formType, setFormType] = useState<
+    "assignment" | "material" | "topic" | null
+  >(null);
+
+  const canCreate = role === "Teacher" || role === "SubTeacher";
+
+  const handleOpenCreate = (type: "assignment" | "material" | "topic") => {
+    setFormType(type);
+    setOpenCreateModal(true);
+  };
+
+  const handleCloseCreate = () => {
+    setOpenCreateModal(false);
+    setFormType(null);
+  };
+
+  return (
+    <Box>
+      {canCreate && (
+        <Dropdown>
+          <MenuButton
+            variant="outlined"
+            sx={{ mb: 2 }}
+            aria-label="Create classwork"
+          >
+            Create
+          </MenuButton>
+          <Menu>
+            <MenuItem
+              onClick={() => {
+                handleOpenCreate("assignment");
+                setLayout("fullscreen");
+              }}
+            >
+              Assignment
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleOpenCreate("material");
+                setLayout("fullscreen");
+              }}
+            >
+              Material
+            </MenuItem>
+            <MenuItem onClick={() => handleOpenCreate("topic")}>Topic</MenuItem>
+          </Menu>
+        </Dropdown>
+      )}
+
+      <Modal open={openCreateModal} onClose={handleCloseCreate}>
+        <ModalDialog layout={layout}>
+          <ModalClose />
+          <DialogTitle>
+            {formType === "assignment"
+              ? "Create Assignment"
+              : formType === "material"
+              ? "Create Material"
+              : formType === "topic"
+              ? "Create Topic"
+              : ""}
+          </DialogTitle>
+          <DialogContent>
+            {formType === "assignment" && <AssignmentCreateForm />}
+            {formType === "material" && <MaterialCreateForm />}
+            {formType === "topic" && (
+              <Typography>Topic creation form goes here.</Typography>
+              // Replace with your actual TopicCreateForm component
+            )}
+          </DialogContent>
+        </ModalDialog>
+      </Modal>
+
+      {/* Show lists for all roles */}
+      <AssignmentList />
+      <MaterialList />
+    </Box>
+  );
+}

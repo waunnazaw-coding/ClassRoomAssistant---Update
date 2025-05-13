@@ -1,0 +1,109 @@
+/* .calendar-container {
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.calendar-header button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.calendar-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.days-header,
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.day-header {
+  text-align: center;
+  padding: 8px;
+  font-weight: bold;
+}
+
+.day-cell {
+  text-align: center;
+  padding: 8px;
+  border: 1px solid #eee;
+}
+
+.current-day {
+  background-color: #007bff;
+  color: white;
+} */
+
+.calendar-container {
+  width: 100%;
+  /* Take up full height */
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.calendar-header button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: inherit; /* Inherit text color from parent */
+}
+
+.calendar-body {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.days-header,
+.days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  flex-grow: 1;
+}
+
+.day-header {
+  text-align: center;
+  padding: 8px;
+  font-weight: bold;
+}
+
+.day-cell {
+  text-align: center;
+  padding: 8px;
+  border: 1px solid #ddd; /* Add border to all day cells */
+}
+
+.current-day {
+  background-color: #007bff;
+  color: white;
+}
+
+.other-month {
+  color: #aaa; /* Style for days in other months */
+}
