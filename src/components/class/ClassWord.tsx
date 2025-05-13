@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import Box from "@mui/joy/Box";
-import Typography from "@mui/joy/Typography";
 import Dropdown from "@mui/joy/Dropdown";
 import Menu from "@mui/joy/Menu";
 import MenuButton from "@mui/joy/MenuButton";
@@ -14,12 +13,15 @@ import AssignmentCreateForm from "./AssignmentCreate";
 import MaterialCreateForm from "./MaterialCreate";
 import AssignmentList from "./AssignmentList";
 import MaterialList from "./MaterialList";
+import TopicCreateForm from "./TopicCreateForm";
+import Toast from "../common/Toast"; // Import Toast here
 
 interface ClassWordProps {
   role: "Teacher" | "SubTeacher" | "Student";
+  userId: number;
 }
 
-export default function ClassWord({ role }: ClassWordProps) {
+export default function ClassWord({ role, userId }: ClassWordProps) {
   const [layout, setLayout] = React.useState<
     ModalDialogProps["layout"] | undefined
   >(undefined);
@@ -27,6 +29,10 @@ export default function ClassWord({ role }: ClassWordProps) {
   const [formType, setFormType] = useState<
     "assignment" | "material" | "topic" | null
   >(null);
+
+  // Toast state lifted here
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   const canCreate = role === "Teacher" || role === "SubTeacher";
 
@@ -38,6 +44,14 @@ export default function ClassWord({ role }: ClassWordProps) {
   const handleCloseCreate = () => {
     setOpenCreateModal(false);
     setFormType(null);
+  };
+
+  // Handle topic created event here and show toast
+  const handleTopicCreated = (topic: any) => {
+    console.log("New topic created:", topic);
+    setToastMessage("Topic created successfully!");
+    setToastOpen(true);
+    // You can also refresh topic list or do other updates here
   };
 
   return (
@@ -68,7 +82,14 @@ export default function ClassWord({ role }: ClassWordProps) {
             >
               Material
             </MenuItem>
-            <MenuItem onClick={() => handleOpenCreate("topic")}>Topic</MenuItem>
+            <MenuItem
+              onClick={() => {
+                handleOpenCreate("topic");
+                setLayout(undefined);
+              }}
+            >
+              Topic
+            </MenuItem>
           </Menu>
         </Dropdown>
       )}
@@ -89,8 +110,11 @@ export default function ClassWord({ role }: ClassWordProps) {
             {formType === "assignment" && <AssignmentCreateForm classId={6} />}
             {formType === "material" && <MaterialCreateForm />}
             {formType === "topic" && (
-              <Typography>Topic creation form goes here.</Typography>
-              
+              <TopicCreateForm
+                userId={userId}
+                onCreated={handleTopicCreated}
+                onClose={handleCloseCreate}
+              />
             )}
           </DialogContent>
         </ModalDialog>
@@ -99,6 +123,15 @@ export default function ClassWord({ role }: ClassWordProps) {
       {/* Show lists for all roles */}
       <AssignmentList />
       <MaterialList />
+
+      {/* Toast rendered here */}
+      <Toast
+        open={toastOpen}
+        message={toastMessage}
+        color="success"
+        onClose={() => setToastOpen(false)}
+        autoHideDuration={3000}
+      />
     </Box>
   );
 }

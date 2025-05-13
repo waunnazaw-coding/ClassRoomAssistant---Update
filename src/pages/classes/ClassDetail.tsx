@@ -219,7 +219,7 @@ export default function ClassDetail() {
             </TabPanel>
 
             <TabPanel value={1} sx={{ p: 3 }}>
-              <ClassWord role={classParticipant.role} />
+              <ClassWord role={classParticipant.role} userId={user?.id!} />
             </TabPanel>
 
             <TabPanel value={2} sx={{ p: 3 }}>
