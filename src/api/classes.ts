@@ -7,6 +7,7 @@ import {
   Class,
   GetClassDetailsResponse,
   TopicWithMaterialsAssignmentsDto,
+  UserDto,
 } from "../types/index";
 
 export async function createClass(
@@ -16,13 +17,39 @@ export async function createClass(
   return response.data;
 }
 
+// Define the ApiResponse interface matching backend structure
+interface ApiResponse<T> {
+  data: T | null;
+  success: boolean;
+  message: string;
+}
+
+// Your existing GetClassDetailsResponse interface/type should be defined elsewhere
+
 export async function getClassDetails(
   classId: number
 ): Promise<GetClassDetailsResponse> {
-  const response = await axiosInstance.get<GetClassDetailsResponse>(
-    `/classes/${classId}/details`
-  );
-  return response.data;
+  try {
+    const response = await axiosInstance.get<
+      ApiResponse<GetClassDetailsResponse>
+    >(`/classes/${classId}/details`);
+
+    const apiResponse = response.data;
+
+    if (!apiResponse.success) {
+      // Handle failure case, e.g., throw an error with the message from backend
+      throw new Error(apiResponse.message);
+    }
+
+    if (!apiResponse.data) {
+      throw new Error("No class details found.");
+    }
+
+    return apiResponse.data;
+  } catch (error: any) {
+    // Optionally, you can enhance error handling here
+    throw new Error(error.message || "Failed to fetch class details.");
+  }
 }
 
 export async function enrollInClass(
@@ -38,6 +65,8 @@ export async function enrollInClass(
 export async function getClassById(classId: number): Promise<Class[]> {
   const response = await axiosInstance.get(`/classes/${classId}`);
   return response.data;
+
+  console.log(response.data);
 }
 
 // Get all classes for a user
@@ -85,7 +114,7 @@ export async function unenrollFromClass(
 // Get participants for a class
 export async function getClassParticipants(
   classId: number
-): Promise<{ userId: number; name: string; role: string }[]> {
+): Promise<UserDto[]> {
   const response = await axiosInstance.get(`/classes/${classId}/participants`);
   return response.data;
 }
@@ -106,4 +135,79 @@ export async function getClassWorks(
 ): Promise<TopicWithMaterialsAssignmentsDto[]> {
   const response = await axiosInstance.get(`/classes/${classId}/class-works`);
   return response.data;
+}
+
+// Invite a sub-teacher to the class
+export async function addSubTeacherToClass(
+  teacherUserId: number,
+  classId: number,
+  email: string
+): Promise<{ message: string }> {
+  const response = await axiosInstance.post(
+    `/classes/${classId}/participants/subteachers`,
+    { email },
+    {
+      params: {
+        teacherUserId,
+      },
+    }
+  );
+  return response.data;
+}
+
+// Invite a student to the class
+export async function addStudentToClass(
+  teacherUserId: number,
+  classId: number,
+  email: string
+): Promise<{ message: string }> {
+  const response = await axiosInstance.post(
+    `/classes/${classId}/participants/students`,
+    { email },
+    {
+      params: {
+        teacherUserId,
+      },
+    }
+  );
+  return response.data;
+}
+// Transfer class ownership (use PUT, not POST)
+export async function transferClassOwnership(
+  classId: number,
+  currentOwnerId: number,
+  newOwnerId: number
+): Promise<{ message: string }> {
+  const response = await axiosInstance.put(
+    `/classes/${classId}/participants/transfer-ownership`,
+    null,
+    {
+      params: {
+        currentOwnerId,
+        newOwnerId,
+      },
+    }
+  );
+  return response.data;
+}
+
+// Remove Sub Teacher from class
+// Make sure this endpoint exists in your API controller
+export async function removeSubTeacherFromClass(
+  classId: number,
+  subTeacherId: number
+): Promise<void> {
+  await axiosInstance.delete(
+    `/classes/${classId}/participants/sub-teachers/${subTeacherId}`
+  );
+}
+
+// Remove student from class
+export async function removeStudentFromClass(
+  classId: number,
+  studentId: number
+): Promise<void> {
+  await axiosInstance.delete(
+    `/classes/${classId}/participants/students/${studentId}`
+  );
 }

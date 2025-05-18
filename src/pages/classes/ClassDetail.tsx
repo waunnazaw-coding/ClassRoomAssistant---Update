@@ -77,7 +77,9 @@ export default function ClassDetail() {
     };
   }, [classId, user]);
 
-  const classParticipant = participants.find((cp) => cp.userId === user?.id);
+  const classParticipant = participants.find(
+    (cp) => cp.userId === Number(user?.id)
+  );
 
   const isTeacher = classParticipant?.role === "Teacher";
   const isSubTeacher = classParticipant?.role === "SubTeacher";
@@ -219,11 +221,19 @@ export default function ClassDetail() {
             </TabPanel>
 
             <TabPanel value={1} sx={{ p: 3 }}>
-              <ClassWord role={classParticipant.role} userId={user?.id!} />
+              <ClassWord
+                role={classParticipant.role}
+                userId={Number(user?.id)}
+                classId={classDetail}
+              />
             </TabPanel>
 
             <TabPanel value={2} sx={{ p: 3 }}>
-              <People participants={participants} />
+              <People
+                participants={participants}
+                currentUserId={Number(user?.id)}
+                classId={classDetail.id}
+              />
             </TabPanel>
 
             {(isTeacher || isSubTeacher) && (

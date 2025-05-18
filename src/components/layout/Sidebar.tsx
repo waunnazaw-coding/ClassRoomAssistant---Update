@@ -20,7 +20,8 @@ import ArchiveRoundedIcon from "@mui/icons-material/ArchiveRounded";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 import { useAuth } from "../../contexts/AuthContext";
-import { getClassesByUserId, ClassResponseDto } from "../../api/classes";
+import { getClassesByUserId } from "../../api/classes";
+import { ClassResponseDto } from "../../types/index";
 import { generateColorScheme } from "./generateColorSheme";
 
 function Toggler({
@@ -63,11 +64,12 @@ export default function Sidebar() {
       return;
     }
 
-    getClassesByUserId(user.id)
+    getClassesByUserId(Number(user.id))
       .then((data) => {
-        setClasses(data.filter((cls) => !cls.isDeleted));
+        const activeClasses = data.filter((cls) => !cls.isDeleted);
+        setClasses(activeClasses);
       })
-      .catch((err) => console.error("Failed to fetch classes:", err));
+      .catch((err) => {});
   }, [user]);
 
   const teachingClasses = classes.filter(

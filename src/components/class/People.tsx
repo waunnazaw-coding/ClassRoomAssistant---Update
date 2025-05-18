@@ -1,29 +1,42 @@
 import React, { useState } from "react";
-import Box from "@mui/joy/Box";
-import Typography from "@mui/joy/Typography";
-import Stack from "@mui/joy/Stack";
-import Avatar from "@mui/joy/Avatar";
-import IconButton from "@mui/joy/IconButton";
-import PersonAdd from "@mui/icons-material/PersonAdd";
-import Divider from "@mui/joy/Divider";
-import Link from "@mui/joy/Link";
-import Checkbox from "@mui/joy/Checkbox";
-import Menu from "@mui/joy/Menu";
-import MenuItem from "@mui/joy/MenuItem";
-import Dropdown from "@mui/joy/Dropdown";
-import MenuButton from "@mui/joy/MenuButton";
-import Modal from "@mui/joy/Modal";
-import ModalDialog from "@mui/joy/ModalDialog";
-import ModalClose from "@mui/joy/ModalClose";
-import Button from "@mui/joy/Button";
-import Input from "@mui/joy/Input";
-import MoreVert from "@mui/icons-material/MoreVert";
-import ArrowDropDown from "@mui/icons-material/ArrowDropDown";
-import SortByAlpha from "@mui/icons-material/SortByAlpha";
+import {
+  Box,
+  Typography,
+  Stack,
+  Avatar,
+  IconButton,
+  Divider,
+  Link,
+  Checkbox,
+  Menu,
+  MenuItem,
+  Dropdown,
+  MenuButton,
+  Modal,
+  ModalDialog,
+  ModalClose,
+  Button,
+  Input,
+} from "@mui/joy";
+import {
+  PersonAdd,
+  MoreVert,
+  ArrowDropDown,
+  SortByAlpha,
+} from "@mui/icons-material";
+import {
+  addSubTeacherToClass,
+  addStudentToClass,
+  removeStudentFromClass,
+  removeSubTeacherFromClass,
+  transferClassOwnership,
+} from "../../api/classes";
+import ConfirmDialog from "../common/ConfirmDialog";
+import Toast from "../common/Toast"; // Import Toast
+import { Alert } from "@mui/material";
 
-// Illustration for empty students
 const EmptyStudentsIllustration = () => (
-  <Box sx={{ textAlign: "center", mb: 2 }}>
+  <Box textAlign="center" mb={2}>
     <svg width="120" height="60" viewBox="0 0 120 60" fill="none">
       <ellipse cx="60" cy="50" rx="40" ry="8" fill="#F5F5F5" />
       <rect x="40" y="30" width="40" height="16" rx="4" fill="#E0E0E0" />
@@ -40,8 +53,8 @@ const EmptyStudentsIllustration = () => (
 );
 
 interface Participant {
-  id: string | number;
-  userId: string;
+  id: number;
+  userId: number;
   userName?: string;
   role: string;
   avatarUrl?: string;
@@ -49,240 +62,409 @@ interface Participant {
 
 interface PeopleProps {
   participants: Participant[];
+  currentUserId: number;
+  classId: number;
 }
 
-export default function People({ participants }: PeopleProps) {
-  // Modal state
+export default function People({
+  participants,
+  currentUserId,
+  classId,
+}: PeopleProps) {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteType, setInviteType] = useState<"teacher" | "student" | null>(
     null
   );
   const [inviteInput, setInviteInput] = useState("");
-
-  // Student selection state for actions
   const [selectedStudentIds, setSelectedStudentIds] = useState<
     (string | number)[]
   >([]);
 
-  const teachers = participants.filter((p) => p.role === "Teacher");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTitle, setConfirmTitle] = useState("");
+  const [confirmDescription, setConfirmDescription] = useState("");
+  const [onConfirmAction, setOnConfirmAction] = useState<() => void>(
+    () => () => {}
+  );
+
+  // Toast state
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastColor, setToastColor] = useState<
+    "success" | "danger" | "warning" | "neutral"
+  >("success");
+
+  // Helper to show toast
+  const showToast = (message: string, color: typeof toastColor = "success") => {
+    setToastMessage(message);
+    setToastColor(color);
+    setToastOpen(true);
+  };
+
+  const teachers = participants.filter((p) =>
+    ["Teacher", "SubTeacher"].includes(p.role)
+  );
   const students = participants.filter((p) => p.role === "Student");
 
-  const getInitial = (name?: string) =>
-    name && name.length > 0 ? name.charAt(0).toUpperCase() : "?";
+  const allSelected =
+    students.length > 0 && selectedStudentIds.length === students.length;
 
-  // Handlers
-  const handleInviteClick = (type: "teacher" | "student") => {
-    setInviteType(type);
-    setInviteOpen(true);
-    setInviteInput("");
+  const handleInvite = async () => {
+    try {
+      if (!inviteInput.trim() || !inviteType) return;
+
+      if (inviteType === "teacher") {
+        await addSubTeacherToClass(currentUserId, classId, inviteInput.trim());
+        alert("Sub-teacher invited successfully.");
+      } else {
+        await addStudentToClass(currentUserId, classId, inviteInput.trim());
+        alert("Student invited successfully.");
+      }
+
+      setInviteInput("");
+      setInviteOpen(false);
+    } catch (error) {
+      console.error(error);
+      alert("Failed to invite. Please check the email or try again.");
+    }
   };
 
-  const handleInvite = () => {
-    // TODO: Implement invite logic (API call)
-    setInviteOpen(false);
-    setInviteInput("");
+  const openConfirmDialog = (
+    title: string,
+    description: string,
+    onConfirm: () => void
+  ) => {
+    setConfirmTitle(title);
+    setConfirmDescription(description);
+    setOnConfirmAction(() => onConfirm);
+    setConfirmOpen(true);
   };
 
-  const handleCancelInvite = () => {
-    setInviteOpen(false);
-    setInviteInput("");
-  };
-
-  const handleStudentCheckbox = (id: string | number) => {
+  const toggleStudentSelection = (id: string | number) => {
     setSelectedStudentIds((prev) =>
       prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id]
     );
   };
 
-  const allStudentsSelected =
-    students.length > 0 && selectedStudentIds.length === students.length;
-
-  const handleSelectAllStudents = () => {
-    if (allStudentsSelected) {
-      setSelectedStudentIds([]);
-    } else {
-      setSelectedStudentIds(students.map((s) => s.id));
-    }
+  const handleSelectAll = () => {
+    setSelectedStudentIds(allSelected ? [] : students.map((s) => s.id));
   };
 
-  // UI
-  return (
-    <Box sx={{ maxWidth: 700, mx: "auto", mt: 4 }}>
-      {/* Teachers Section */}
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-        <Typography level="h4" fontWeight={700} sx={{ flex: 1 }}>
-          Teachers
-        </Typography>
-        <IconButton
-          variant="plain"
-          color="neutral"
-          size="sm"
-          sx={{ ml: 1 }}
-          aria-label="Add teacher"
-          onClick={() => handleInviteClick("teacher")}
-        >
-          <PersonAdd />
-        </IconButton>
-      </Box>
-      <Divider sx={{ mb: 2 }} />
-      <Stack direction="row" alignItems="center" spacing={2} mb={3}>
-        {teachers.map((t) => (
-          <Stack key={t.id} direction="row" alignItems="center" spacing={1}>
-            <Avatar
-              src={t.avatarUrl}
-              alt={t.userName}
-              sx={{ width: 40, height: 40 }}
-            >
-              {getInitial(t.userName)}
-            </Avatar>
-            <Typography level="body-lg" fontWeight={500}>
-              {t.userName ?? "Unknown"}
-            </Typography>
-          </Stack>
-        ))}
-      </Stack>
+  const openInviteModal = (type: "teacher" | "student") => {
+    setInviteType(type);
+    setInviteOpen(true);
+    setInviteInput("");
+  };
 
-      {/* Students Section */}
-      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-        <Typography level="h4" fontWeight={700} sx={{ flex: 1 }}>
+  const getInitial = (name?: string) => name?.charAt(0).toUpperCase() ?? "?";
+
+  return (
+    <Box maxWidth={700} mx="auto" mt={4}>
+      {[{ title: "Teachers", data: teachers, invite: "teacher" }].map(
+        ({ title, data, invite }) => (
+          <Box key={title} mb={4}>
+            <Box display="flex" alignItems="center" mb={1}>
+              <Typography level="h4" fontWeight={700} flex={1}>
+                {title}
+              </Typography>
+              <IconButton
+                variant="plain"
+                size="sm"
+                onClick={() => openInviteModal(invite as any)}
+              >
+                <PersonAdd />
+              </IconButton>
+            </Box>
+            <Divider />
+            <Stack spacing={2} mt={2}>
+              {data.map((p) => (
+                <Box
+                  key={p.id}
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Avatar src={p.avatarUrl} alt={p.userName}>
+                      {getInitial(p.userName)}
+                    </Avatar>
+                    <Typography>{p.userName ?? "Unknown"}</Typography>
+                  </Stack>
+                  <Dropdown>
+                    <MenuButton
+                      slots={{ root: IconButton }}
+                      slotProps={{
+                        root: { variant: "outlined", color: "neutral" },
+                      }}
+                    >
+                      <MoreVert />
+                    </MenuButton>
+                    <Menu>
+                      {p.role === "SubTeacher" && (
+                        <>
+                          <MenuItem
+                            onClick={() =>
+                              openConfirmDialog(
+                                "Transfer Ownership",
+                                `Are you sure you want to transfer ownership to ${p.userName}?`,
+                                async () => {
+                                  try {
+                                    // Call the API to transfer ownership
+                                    await transferClassOwnership(
+                                      classId,
+                                      currentUserId,
+                                      p.userId
+                                    );
+
+                                    alert(
+                                      `Ownership transferred to ${p.userName}`
+                                    );
+
+                                    setConfirmOpen(false);
+                                  } catch (error: any) {
+                                    showToast(
+                                      "Failed to load classes.",
+                                      "danger"
+                                    );
+
+                                    setConfirmOpen(false);
+                                  }
+                                }
+                              )
+                            }
+                          >
+                            Transfer Owner
+                          </MenuItem>
+
+                          <MenuItem
+                            onClick={() =>
+                              openConfirmDialog(
+                                "Remove Sub-Teacher",
+                                `Are you sure you want to remove ${p.userName} from the class?`,
+                                async () => {
+                                  try {
+                                    // Call the API to transfer ownership
+                                    await removeSubTeacherFromClass(
+                                      classId,
+                                      currentUserId
+                                    );
+
+                                    alert(`Leave Successfully.`);
+
+                                    setConfirmOpen(false);
+                                  } catch (error: any) {
+                                    showToast(
+                                      "Failed to load classes.",
+                                      "danger"
+                                    );
+
+                                    setConfirmOpen(false);
+                                  }
+                                }
+                              )
+                            }
+                          >
+                            Remove
+                          </MenuItem>
+                        </>
+                      )}
+                      {p.role === "SubTeacher" && (
+                        <MenuItem
+                          onClick={() =>
+                            openConfirmDialog(
+                              "Leave Class",
+                              "Are you sure you want to leave this class?",
+                              async () => {
+                                try {
+                                  await removeSubTeacherFromClass(
+                                    classId,
+                                    currentUserId
+                                  );
+
+                                  alert(`Successfully removed ${p.userName}.`);
+
+                                  setConfirmOpen(false);
+                                } catch (error: any) {
+                                  showToast(
+                                    "Failed to load classes.",
+                                    "danger"
+                                  );
+
+                                  setConfirmOpen(false);
+                                }
+                              }
+                            )
+                          }
+                        >
+                          Leave
+                        </MenuItem>
+                      )}
+                    </Menu>
+                  </Dropdown>
+                </Box>
+              ))}
+            </Stack>
+          </Box>
+        )
+      )}
+
+      <Box mb={1} display="flex" alignItems="center">
+        <Typography level="h4" fontWeight={700} flex={1}>
           Students
         </Typography>
         {students.length > 0 && (
-          <Typography level="body-md" color="neutral" sx={{ mr: 1 }}>
+          <Typography level="body-sm" mr={1}>
             {students.length} student{students.length > 1 ? "s" : ""}
           </Typography>
         )}
         <IconButton
           variant="plain"
-          color="neutral"
           size="sm"
-          sx={{ ml: 1 }}
-          aria-label="Invite students"
-          onClick={() => handleInviteClick("student")}
+          onClick={() => openInviteModal("student")}
         >
           <PersonAdd />
         </IconButton>
       </Box>
-      <Divider sx={{ mb: 2 }} />
+      <Divider />
 
-      {/* Student List or Empty State */}
       {students.length === 0 ? (
-        <Box sx={{ textAlign: "center", mt: 4 }}>
+        <Box textAlign="center" mt={4}>
           <EmptyStudentsIllustration />
-          <Typography level="body-md" color="neutral" sx={{ mb: 1 }}>
+          <Typography color="neutral" mb={1}>
             Add students to this class
           </Typography>
           <Link
             component="button"
-            color="primary"
+            onClick={() => openInviteModal("student")}
             startDecorator={<PersonAdd />}
-            onClick={() => handleInviteClick("student")}
-            sx={{ fontWeight: 600, fontSize: "1rem" }}
+            fontWeight={600}
           >
             Invite students
           </Link>
         </Box>
       ) : (
         <Box>
-          {/* Actions Row */}
-          <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+          <Box display="flex" alignItems="center" mb={1}>
             <Checkbox
-              checked={allStudentsSelected}
-              indeterminate={
-                selectedStudentIds.length > 0 && !allStudentsSelected
-              }
-              onChange={handleSelectAllStudents}
-              sx={{ mr: 1 }}
-              aria-label="Select all students"
+              checked={allSelected}
+              indeterminate={selectedStudentIds.length > 0 && !allSelected}
+              onChange={handleSelectAll}
             />
             <Dropdown>
               <MenuButton
                 disabled={selectedStudentIds.length === 0}
                 endDecorator={<ArrowDropDown />}
                 size="sm"
-                sx={{ mr: 2, minWidth: 100 }}
               >
                 Actions
               </MenuButton>
               <Menu>
-                <MenuItem disabled>Remove</MenuItem>
-                <MenuItem disabled>Email</MenuItem>
+                <MenuItem>Remove</MenuItem>
+                <MenuItem>Email</MenuItem>
               </Menu>
             </Dropdown>
-            <Box sx={{ flex: 1 }} />
-            <IconButton
-              size="sm"
-              variant="plain"
-              color="neutral"
-              aria-label="Sort students"
-            >
+            <Box flex={1} />
+            <IconButton size="sm">
               <SortByAlpha />
             </IconButton>
-            <IconButton
-              size="sm"
-              variant="plain"
-              color="neutral"
-              aria-label="More options"
-            >
+            <IconButton size="sm">
               <MoreVert />
             </IconButton>
           </Box>
-          {/* Student List */}
           <Stack spacing={2} mt={2}>
-            {students.map((s) => (
-              <Stack key={s.id} direction="row" alignItems="center" spacing={1}>
-                <Checkbox
-                  checked={selectedStudentIds.includes(s.id)}
-                  onChange={() => handleStudentCheckbox(s.id)}
-                  sx={{ mr: 1 }}
-                  aria-label={`Select ${s.userName ?? "student"}`}
-                />
-                <Avatar
-                  src={s.avatarUrl}
-                  alt={s.userName}
-                  sx={{ width: 40, height: 40 }}
-                >
-                  {getInitial(s.userName)}
-                </Avatar>
-                <Typography level="body-lg" fontWeight={500}>
-                  {s.userName ?? "Unknown"}
-                </Typography>
-              </Stack>
+            {students.map((p) => (
+              <Box
+                key={p.id}
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                p={1}
+                borderRadius="md"
+                sx={{
+                  backgroundColor: "background.level0",
+                  "&:hover": {
+                    backgroundColor: "background.level1",
+                  },
+                }}
+              >
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Avatar src={p.avatarUrl} alt={p.userName}>
+                    {getInitial(p.userName)}
+                  </Avatar>
+                  <Typography fontWeight={500}>
+                    {p.userName ?? "Unknown"}
+                  </Typography>
+                </Stack>
+
+                <Dropdown>
+                  <MenuButton
+                    slots={{ root: IconButton }}
+                    slotProps={{
+                      root: { variant: "outlined", color: "neutral" },
+                    }}
+                  >
+                    <MoreVert />
+                  </MenuButton>
+                  <Menu>
+                    <MenuItem
+                      onClick={() =>
+                        openConfirmDialog(
+                          "Remove Sub-Teacher",
+                          `Are you sure you want to remove ${p.userName} from the class?`,
+                          async () => {
+                            try {
+                              await removeStudentFromClass(
+                                classId,
+                                currentUserId
+                              );
+
+                              alert(`Successfully removed ${p.userName}.`);
+
+                              setConfirmOpen(false);
+                            } catch (error: any) {
+                              showToast("Failed to load classes.", "danger");
+
+                              setConfirmOpen(false);
+                            }
+                          }
+                        )
+                      }
+                    >
+                      Remove
+                    </MenuItem>
+                    <MenuItem>Email</MenuItem>
+                  </Menu>
+                </Dropdown>
+              </Box>
             ))}
           </Stack>
         </Box>
       )}
 
-      {/* Invite Modal */}
-      <Modal open={inviteOpen} onClose={handleCancelInvite}>
+      {/* Modal */}
+      <Modal open={inviteOpen} onClose={() => setInviteOpen(false)}>
         <ModalDialog>
           <ModalClose />
-          <Typography level="h4" fontWeight={700} mb={2}>
-            {inviteType === "teacher"
-              ? "Invite teachers"
-              : inviteType === "student"
-              ? "Invite students"
-              : ""}
+          <Typography level="h4" mb={2} fontWeight={700}>
+            Invite {inviteType === "teacher" ? "Teachers" : "Students"}
           </Typography>
           <Input
             fullWidth
-            placeholder="Type a name or email"
+            placeholder="Enter name or email"
             value={inviteInput}
             onChange={(e) => setInviteInput(e.target.value)}
             sx={{ mb: 2 }}
           />
-          <Typography level="body-sm" color="neutral" sx={{ mb: 2 }}>
+          <Typography level="body-sm" color="neutral" mb={2}>
             {inviteType === "teacher"
-              ? "Teachers you add can do everything you can, except delete the class."
-              : inviteType === "student"
-              ? "Students you add will be able to join and participate in this class."
-              : ""}
+              ? "Teachers can manage class content and assist in grading."
+              : "Students can participate in class discussions and submit assignments."}
           </Typography>
-          <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+          <Box display="flex" justifyContent="flex-end" gap={1}>
             <Button
               variant="plain"
               color="neutral"
-              onClick={handleCancelInvite}
+              onClick={() => setInviteOpen(false)}
             >
               Cancel
             </Button>
@@ -290,13 +472,20 @@ export default function People({ participants }: PeopleProps) {
               variant="solid"
               color="primary"
               onClick={handleInvite}
-              disabled={inviteInput.trim() === ""}
+              disabled={!inviteInput.trim()}
             >
               Invite
             </Button>
           </Box>
         </ModalDialog>
       </Modal>
+      <ConfirmDialog
+        open={confirmOpen}
+        title={confirmTitle}
+        description={confirmDescription}
+        onConfirm={onConfirmAction}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </Box>
   );
 }

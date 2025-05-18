@@ -20,6 +20,8 @@ export default function Home() {
   const [openCreate, setOpenCreate] = useState(false);
   const { user } = useAuth();
 
+  console.log(user?.id);
+
   const [classes, setClasses] = useState<ClassResponseDto[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -45,13 +47,12 @@ export default function Home() {
     }
 
     setLoading(true);
-    getClassesByUserId(user.id)
+    getClassesByUserId(Number(user.id))
       .then((data) => {
         const activeClasses = data.filter((cls) => !cls.isDeleted);
         setClasses(activeClasses);
       })
       .catch((err) => {
-        console.error("Failed to fetch classes:", err);
         showToast("Failed to load classes.", "danger");
       })
       .finally(() => setLoading(false));
@@ -65,14 +66,14 @@ export default function Home() {
     }
 
     try {
-      const res = await enrollInClass(classCode, user.id);
+      const res = await enrollInClass(classCode, Number(user.id));
 
       showToast(
         res.message || `Successfully joined class with code: ${classCode}`,
         "success"
       );
 
-      const updatedClasses = await getClassesByUserId(user.id);
+      const updatedClasses = await getClassesByUserId(Number(user.id));
       setClasses(updatedClasses.filter((cls) => !cls.isDeleted));
 
       setOpenJoin(false);
@@ -94,7 +95,10 @@ export default function Home() {
     }
 
     try {
-      const newClass = await createClass({ ...classDetails, userId: user.id });
+      const newClass = await createClass({
+        ...classDetails,
+        userId: Number(user.id),
+      });
 
       if (!newClass.isDeleted) {
         setClasses((prev) => [...prev, newClass]);

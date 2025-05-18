@@ -41,10 +41,7 @@ export default function SignInForm() {
   const onSubmit: SubmitHandler<SignInFormInputs> = async (data) => {
     setServerError("");
     try {
-      await login({
-        email: data.email,
-        password: data.password,
-      });
+      await login(data.email, data.password);
       navigate("/");
     } catch (err: any) {
       const message =

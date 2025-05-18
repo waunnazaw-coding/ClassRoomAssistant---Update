@@ -106,3 +106,17 @@ export interface TopicDto {
   userId: number;
   createdAt?: string; // ISO string format
 }
+
+export interface AttachmentDto {
+  fileType: string;
+  fileUrl?: string | null;
+  filePath?: string | null;
+}
+
+export interface UserDto {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  profilePicture?: string | null;
+}

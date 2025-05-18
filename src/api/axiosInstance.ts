@@ -1,61 +1,54 @@
-// api/axiosInstance.ts
-import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from "axios";
+import axios from "axios";
 
-const axiosInstance = axios.create({
+// Create an axios instance with default config
+const api = axios.create({
   baseURL: "https://localhost:44381/api",
-  timeout: 10000,
-  withCredentials: true,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
 
-import type { InternalAxiosRequestConfig } from "axios";
-
-axiosInstance.interceptors.request.use(
-  async (config: InternalAxiosRequestConfig) => {
-    try {
-      // Retrieve token from localStorage or other storage (e.g., cookies)
-      const token = localStorage.getItem("token");
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    } catch (error) {
-      console.error("Error in request interceptor:", error);
-      return config;
+// Request interceptor to add Authorization header with Bearer token
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("authToken"); // must match stored key
+  if (token) {
+    config.headers = config.headers || {};
+    config.headers["Authorization"] = `Bearer ${token}`;
+    console.log("Sending request with token:", token);
+  } else {
+    console.log("No token found in localStorage");
+    if (config.headers) {
+      delete config.headers["Authorization"];
     }
-  },
-  (error: AxiosError) => {
-    // Handle request errors here if needed
-    return Promise.reject(error);
   }
-);
+  return config;
+});
 
-// Response interceptor to globally handle errors like 401 Unauthorized
-axiosInstance.interceptors.response.use(
-  (response: AxiosResponse) => response,
-  (error: AxiosError) => {
-    if (error.response?.status === 401) {
-      // Optional: clear tokens or user state here
-      alert("Session expired. Please login again.");
-
-      // Redirect to login page or a custom route
-      window.location.href = "/login";
-
-      // Reject with a custom error message
-      return Promise.reject(new Error("Unauthorized: Please login."));
-    }
-
-    // Optional: Log other errors
+// Response interceptor to handle errors globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
     if (error.response) {
-      console.error(
-        `HTTP Error: ${error.response.status} - ${error.response.statusText}`,
-        error.response.data
-      );
-    } else {
-      console.error("Network or Axios error:", error.message);
+      const status = error.response.status;
+
+      if (status === 404) {
+        console.error("API endpoint not found:", error.config.url);
+        // You can add custom 404 handling here, e.g., show notification
+      }
+
+      if (status === 401) {
+        // Unauthorized: token expired or invalid
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userData");
+        // Redirect to login page if not already there
+        if (!window.location.pathname.includes("/login")) {
+          window.location.href = "/login";
+        }
+      }
     }
 
     return Promise.reject(error);
   }
 );
 
-export default axiosInstance;
+export default api;

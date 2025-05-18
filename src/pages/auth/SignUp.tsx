@@ -54,17 +54,17 @@ export default function SignUpForm() {
     setServerError("");
     setSuccess(false);
     try {
-      await registerUser({
-        name: data.name,
-        email: data.email,
-        password: data.password,
-      });
+      await registerUser(
+        data.name,
+        data.email,
+        data.password
+      );
 
       setSuccess(true);
       reset();
 
       // Optional: Auto-login after successful registration
-      await login({ email: data.email, password: data.password });
+      await login(data.email, data.password);
 
       // Redirect to home or dashboard
       navigate("/");

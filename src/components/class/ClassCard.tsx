@@ -22,12 +22,8 @@ import DeleteForever from "@mui/icons-material/DeleteForever";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import { Link } from "react-router-dom";
 import { generateColorScheme } from "../layout/generateColorSheme";
-import {
-  ClassResponseDto,
-  updateClass,
-  deleteClass,
-  unenrollFromClass,
-} from "../../api/classes";
+import { updateClass, deleteClass, unenrollFromClass } from "../../api/classes";
+import { ClassResponseDto } from "../../types/index";
 import EditClassModal from "./EditClassModal";
 import Toast from "../common/Toast";
 import ConfirmDialog from "../common/ConfirmDialog"; // Import ConfirmDialog
@@ -133,7 +129,7 @@ export default function ClassCard({ classes, setClasses }: ClassCardProps) {
     setConfirmAction(() => async () => {
       try {
         if (user) {
-          await unenrollFromClass(cls.id, user.id);
+          await unenrollFromClass(cls.id, Number(user.id));
           showToast("You have left the class.", "success");
           setClasses((prev) => prev.filter((c) => c.id !== cls.id));
         } else {

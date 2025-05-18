@@ -125,7 +125,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
               {user.avatar ? (
                 <Avatar src={user.avatar} size="sm" />
               ) : (
-                <Avatar size="sm">{getInitials(user.name)}</Avatar>
+                <Avatar size="sm">W</Avatar>
               )}
             </MenuButton>
           </Tooltip>
